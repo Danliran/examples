@@ -77,18 +77,19 @@ def main():
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
 
-    if not args.distributed:
-        if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
-            model.features = torch.nn.DataParallel(model.features)
-            model.cuda()
-        else:
-            model = torch.nn.DataParallel(model).cuda()
-    else:
-        model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model)
+#    if not args.distributed:
+#        if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
+#            model.features = torch.nn.DataParallel(model.features)
+#            model.cuda()
+#        else:
+#            model = torch.nn.DataParallel(model).cuda()
+#    else:
+#        model.cuda()
+#        model = torch.nn.parallel.DistributedDataParallel(model)
 
     # define loss function (criterion) and optimizer
-    criterion = nn.CrossEntropyLoss().cuda()
+#    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.CrossEntropyLoss()
 
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
@@ -231,7 +232,7 @@ def validate(val_loader, model, criterion):
 
     end = time.time()
     for i, (input, target) in enumerate(val_loader):
-        target = target.cuda(async=True)
+#        target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input, volatile=True)
         target_var = torch.autograd.Variable(target, volatile=True)
 
@@ -241,7 +242,8 @@ def validate(val_loader, model, criterion):
 
         # measure accuracy and record loss
         prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-        losses.update(loss.data[0], input.size(0))
+        losses.update(loss.item(), input.size(0))
+        #losses.update(loss.data[0], input.size(0))
         top1.update(prec1[0], input.size(0))
         top5.update(prec5[0], input.size(0))
 
